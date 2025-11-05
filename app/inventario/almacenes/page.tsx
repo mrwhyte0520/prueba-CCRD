@@ -23,6 +23,7 @@ export default function AlmacenesPage() {
     direccion: "",
     responsable: "",
   })
+  const DEFAULT_EMPRESA_ID = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501";
 
   useEffect(() => {
     loadAlmacenes()
@@ -47,12 +48,14 @@ export default function AlmacenesPage() {
     }
 
     try {
-      await almacenesService.createAlmacen({
-        codigo: formData.codigo,
-        nombre: formData.nombre,
-        direccion: formData.direccion,
-        responsable: formData.responsable,
-        estado: "activo",
+      const DEFAULT_EMPRESA_ID = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501";
+await almacenesService.createAlmacen(DEFAULT_EMPRESA_ID, {
+  codigo: formData.codigo,
+  nombre: formData.nombre,
+  direccion: formData.direccion,
+  responsable: formData.responsable,
+  activo: true,
+
       })
 
       alert("Almacén guardado exitosamente")
@@ -69,13 +72,14 @@ export default function AlmacenesPage() {
     if (!confirm("¿Está seguro de eliminar este almacén?")) return
 
     try {
-      await almacenesService.deleteAlmacen(id)
-      alert("Almacén eliminado exitosamente")
-      loadAlmacenes()
-    } catch (error) {
-      console.error("[v0] Error deleting almacen:", error)
-      alert("Error al eliminar el almacén")
-    }
+      
+    await almacenesService.deleteAlmacen(id, DEFAULT_EMPRESA_ID);
+    alert("Almacén eliminado exitosamente");
+    loadAlmacenes();
+  } catch (error) {
+    console.error("[v0] Error deleting almacen:", error);
+    alert("Error al eliminar el almacén");
+  }
   }
 
   return (

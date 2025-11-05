@@ -22,7 +22,7 @@ export async function getPagos(empresaId: string) {
 // Wrapper function for compatibility
 export async function getAllPagos() {
   // TODO: Get empresaId from authenticated user
-  const empresaId = "00000000-0000-0000-0000-000000000000"
+  const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
   return getPagos(empresaId)
 }
 
@@ -36,7 +36,7 @@ export async function createPago(pago: {
   notas?: string
 }) {
   // TODO: Get empresaId from authenticated user
-  const empresaId = "00000000-0000-0000-0000-000000000000"
+  const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
 
   // Generate next pago number
   const { data: lastPago } = await supabase

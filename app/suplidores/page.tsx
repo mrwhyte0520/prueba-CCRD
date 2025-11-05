@@ -25,6 +25,7 @@ export default function SuplidoresPage() {
   const [dialogAbierto, setDialogAbierto] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const { toast } = useToast()
+const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
 
   const [formData, setFormData] = useState({
     codigo: "",
@@ -73,16 +74,17 @@ export default function SuplidoresPage() {
 
     try {
       setSubmitting(true)
-      await suplidoresService.createSuplidor({
-        codigo: formData.codigo,
-        nombre: formData.nombre,
-        rnc: formData.rnc,
-        telefono: formData.telefono,
-        email: formData.email,
-        direccion: formData.direccion,
-        persona_contacto: formData.persona_contacto,
-        terminos_pago: Number.parseInt(formData.terminos_pago) || 30,
-        estado: "activo",
+      await suplidoresService.createSuplidor(empresaId, {
+  codigo: formData.codigo,
+  nombre: formData.nombre,
+  rnc: formData.rnc,
+  telefono: formData.telefono,
+  email: formData.email,
+  direccion: formData.direccion,
+  persona_contacto: formData.persona_contacto,
+  terminos_pago: Number.parseInt(formData.terminos_pago) || 30,
+  activo: true,
+  balance: 0, // ✅ inicializamos balance
       })
 
       toast({
@@ -118,7 +120,7 @@ export default function SuplidoresPage() {
     if (!confirm("¿Estás seguro de eliminar este suplidor?")) return
 
     try {
-      await suplidoresService.deleteSuplidor(id)
+      await suplidoresService.deleteSuplidor(id,empresaId)
       toast({
         title: "Suplidor eliminado",
         description: "El suplidor se ha eliminado correctamente",

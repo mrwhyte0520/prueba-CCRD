@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Plus, Edit, Trash2, FileText, AlertTriangle } from "lucide-react"
 import * as ncfService from "@/lib/services/ncf.service"
-
+import { createSerieNCF } from "@/lib/services/ncf.service";
 interface SerieFiscal {
   id: string
   tipo: string
@@ -55,21 +55,32 @@ export default function SeriesFiscalesPage() {
   const loadSeries = async () => {
     try {
       setIsLoading(true)
-      const empresaId = "00000000-0000-0000-0000-000000000000" // TODO: Get from auth
+      const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501" // TODO: Get from auth
       const data = await ncfService.getSecuenciasNCF(empresaId)
 
-      const seriesFormateadas = data.map((s: any) => ({
-        id: s.id,
-        tipo: s.tipo_comprobante,
-        descripcion: s.descripcion || `Comprobante tipo ${s.tipo_comprobante}`,
-        serie: s.serie,
-        desde: s.desde,
-        hasta: s.hasta,
-        fechaAutorizacion: s.fecha_autorizacion,
-        fechaVencimiento: s.fecha_vencimiento,
-        estado: s.estado === "activa" ? "Activa" : s.estado === "vencida" ? "Vencida" : "Agotada",
-      }))
+      const seriesFormateadas = data.map((s: any) => {
+  let estado: "Activa" | "Vencida" | "Agotada";
 
+  if (!s.activa) {
+    estado = "Vencida";
+  } else if (s.actual >= s.hasta) {
+    estado = "Agotada";
+  } else {
+    estado = "Activa";
+  }
+
+  return {
+    id: s.id,
+    tipo: s.tipo_comprobante,
+    descripcion: s.descripcion || `Comprobante tipo ${s.tipo_comprobante}`,
+    serie: s.serie,
+    desde: s.desde,
+    hasta: s.hasta,
+    fechaAutorizacion: s.created_at,
+    fechaVencimiento: s.fecha_vencimiento,
+    estado,
+  };
+});
       setSeries(seriesFormateadas)
     } catch (error) {
       console.error("[v0] Error loading series:", error)
@@ -80,18 +91,16 @@ export default function SeriesFiscalesPage() {
 
   const handleAgregarSerie = async () => {
     try {
-      const empresaId = "00000000-0000-0000-0000-000000000000" // TODO: Get from auth
+      const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501" // TODO: Get from auth
 
-      await ncfService.createSecuenciaNCF(empresaId, {
-        tipo_comprobante: nuevaSerie.tipo,
-        serie: nuevaSerie.serie,
-        desde: Number.parseInt(nuevaSerie.desde),
-        hasta: Number.parseInt(nuevaSerie.hasta),
-        actual: Number.parseInt(nuevaSerie.desde),
-        fecha_autorizacion: nuevaSerie.fechaAutorizacion,
-        fecha_vencimiento: nuevaSerie.fechaVencimiento,
-        descripcion: nuevaSerie.descripcion,
-      })
+      await ncfService.createSerieNCF(empresaId, {
+  tipo_comprobante: nuevaSerie.tipo as "B01" | "B02" | "B14" | "B15" | "B16",
+  secuencia_desde: Number.parseInt(nuevaSerie.desde),
+  secuencia_hasta: Number.parseInt(nuevaSerie.hasta),
+  secuencia_actual: Number.parseInt(nuevaSerie.desde),
+  fecha_vencimiento: nuevaSerie.fechaVencimiento,
+  activa: true,
+})
 
       await loadSeries()
 
@@ -112,8 +121,8 @@ export default function SeriesFiscalesPage() {
 
   const handleDeleteSerie = async (serieId: string) => {
     try {
-      const empresaId = "00000000-0000-0000-0000-000000000000" // TODO: Get from auth
-      await ncfService.deleteSecuenciaNCF(serieId, empresaId)
+      const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501" // TODO: Get from auth
+      await ncfService.deleteSerieNCF(serieId, empresaId)
       await loadSeries()
     } catch (error) {
       console.error("[v0] Error deleting serie:", error)

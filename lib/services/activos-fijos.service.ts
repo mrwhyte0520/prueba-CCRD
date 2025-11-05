@@ -21,7 +21,7 @@ export interface ActivoFijo {
   updated_at?: string
 }
 
-// Get all activos fijos for the current empresa
+// Obtener todos los activos de una empresa
 export async function getActivosFijos(empresaId: string) {
   const { data, error } = await supabase
     .from("activos_fijos")
@@ -29,15 +29,11 @@ export async function getActivosFijos(empresaId: string) {
     .eq("empresa_id", empresaId)
     .order("codigo", { ascending: true })
 
-  if (error) {
-    console.error("[v0] Error fetching activos fijos:", error)
-    throw error
-  }
-
+  if (error) throw error
   return data
 }
 
-// Get activo fijo by ID
+// Obtener un activo por ID
 export async function getActivoFijoById(activoId: string, empresaId: string) {
   const { data, error } = await supabase
     .from("activos_fijos")
@@ -46,35 +42,31 @@ export async function getActivoFijoById(activoId: string, empresaId: string) {
     .eq("empresa_id", empresaId)
     .single()
 
-  if (error) {
-    console.error("[v0] Error fetching activo fijo:", error)
-    throw error
-  }
-
+  if (error) throw error
   return data
 }
 
-// Create activo fijo
-export async function createActivoFijo(empresaId: string, activoData: Omit<ActivoFijo, "id" | "empresa_id">) {
+// Crear un nuevo activo
+export async function createActivoFijo(
+  empresaId: string,
+  activoData: Omit<ActivoFijo, "id" | "empresa_id">
+) {
   const { data, error } = await supabase
     .from("activos_fijos")
-    .insert({
-      empresa_id: empresaId,
-      ...activoData,
-    })
+    .insert({ empresa_id: empresaId, ...activoData })
     .select()
     .single()
 
-  if (error) {
-    console.error("[v0] Error creating activo fijo:", error)
-    throw error
-  }
-
+  if (error) throw error
   return data
 }
 
-// Update activo fijo
-export async function updateActivoFijo(activoId: string, empresaId: string, activoData: Partial<ActivoFijo>) {
+// Actualizar un activo existente
+export async function updateActivoFijo(
+  activoId: string,
+  empresaId: string,
+  activoData: Partial<ActivoFijo>
+) {
   const { data, error } = await supabase
     .from("activos_fijos")
     .update(activoData)
@@ -83,15 +75,23 @@ export async function updateActivoFijo(activoId: string, empresaId: string, acti
     .select()
     .single()
 
-  if (error) {
-    console.error("[v0] Error updating activo fijo:", error)
-    throw error
-  }
-
+  if (error) throw error
   return data
 }
 
-// Calculate depreciation for an asset
+// Eliminar un activo
+export async function deleteActivoFijo(activoId: string, empresaId: string) {
+  const { data, error } = await supabase
+    .from("activos_fijos")
+    .delete()
+    .eq("id", activoId)
+    .eq("empresa_id", empresaId)
+
+  if (error) throw error
+  return data
+}
+
+// Depreciación
 export function calcularDepreciacion(activo: ActivoFijo, meses: number): number {
   const costoDepreciable = activo.costo_adquisicion - activo.valor_residual
   const vidaUtilMeses = activo.vida_util_anos * 12
@@ -101,11 +101,11 @@ export function calcularDepreciacion(activo: ActivoFijo, meses: number): number 
     return depreciacionMensual * meses
   }
 
-  // For other methods, implement specific logic
+  // Otros métodos no implementados
   return 0
 }
 
-// Get activos by categoria
+// Filtrar activos por categoría
 export async function getActivosByCategoria(empresaId: string, categoria: string) {
   const { data, error } = await supabase
     .from("activos_fijos")
@@ -114,21 +114,11 @@ export async function getActivosByCategoria(empresaId: string, categoria: string
     .eq("categoria", categoria)
     .order("codigo", { ascending: true })
 
-  if (error) {
-    console.error("[v0] Error fetching activos by categoria:", error)
-    throw error
-  }
-
+  if (error) throw error
   return data
 }
 
+// Alias para compatibilidad
 export async function getActivos(empresaId: string) {
-  return getActivosFijos(empresaId)
-}
-
-// TODO: Get empresaId from authenticated user context
-export async function getAll() {
-  // Using a placeholder empresaId - should be replaced with actual user's empresa_id
-  const empresaId = "00000000-0000-0000-0000-000000000000"
   return getActivosFijos(empresaId)
 }

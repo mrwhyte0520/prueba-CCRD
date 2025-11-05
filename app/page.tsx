@@ -1,5 +1,5 @@
 "use client"
-
+import {  PieLabelRenderProps } from "recharts";
 import { Sidebar } from "@/components/sidebar"
 import { Header } from "@/components/header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -43,7 +43,7 @@ export default function DashboardPage() {
   const loadDashboardData = async () => {
     try {
       setLoading(true)
-      const empresaId = "00000000-0000-0000-0000-000000000000"
+      const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
 
       // Get current month's sales
       const facturas = await facturasService.getFacturas(empresaId)
@@ -369,24 +369,27 @@ export default function DashboardPage() {
                   className="h-[300px]"
                 >
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={cuentasPorCobrarData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {cuentasPorCobrarData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                    </PieChart>
-                  </ResponsiveContainer>
+  <PieChart>
+    <Pie
+      data={cuentasPorCobrarData}
+      cx="50%"
+      cy="50%"
+      labelLine={false}
+      label={(props: PieLabelRenderProps) => {
+        const { name, percent } = props;
+        return `${name}: ${(Number(percent ?? 0) * 100).toFixed(0)}%`;;
+      }}
+      outerRadius={80}
+      fill="#8884d8"
+      dataKey="value"
+    >
+      {cuentasPorCobrarData.map((entry, index) => (
+        <Cell key={`cell-${index}`} fill={entry.color} />
+      ))}
+    </Pie>
+    <ChartTooltip content={<ChartTooltipContent />} />
+  </PieChart>
+</ResponsiveContainer>
                 </ChartContainer>
                 <div className="mt-4 space-y-2">
                   {cuentasPorCobrarData.map((item, index) => (

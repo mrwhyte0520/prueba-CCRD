@@ -59,15 +59,15 @@ export async function getCuentasPorPagar(empresaId: string) {
 
       return {
         id: orden.id,
-        orden_numero: orden.numero,
-        suplidor_id: orden.suplidores?.id || "",
-        suplidor_nombre: orden.suplidores?.nombre || "",
-        fecha: orden.fecha,
-        vencimiento: vencimiento.toISOString().split("T")[0],
-        monto: orden.total,
-        balance,
-        estado,
-        dias_vencido: diasVencido,
+  orden_numero: orden.numero,
+  suplidor_id: orden.suplidores?.[0]?.id || "",
+  suplidor_nombre: orden.suplidores?.[0]?.nombre || "",
+  fecha: orden.fecha,
+  vencimiento: vencimiento.toISOString().split("T")[0],
+  monto: orden.total,
+  balance,
+  estado,
+  dias_vencido: diasVencido,
       }
     }),
   )
@@ -112,6 +112,6 @@ async function getOrdenBalance(ordenId: string, empresaId: string): Promise<numb
 
 export async function getAllCuentasPagar() {
   // TODO: Get empresaId from authenticated user context
-  const empresaId = "00000000-0000-0000-0000-000000000000"
+  const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
   return getCuentasPorPagar(empresaId)
 }

@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { FileText, Loader2 } from "lucide-react"
 import { useState, useEffect } from "react"
 import * as contabilidadService from "@/lib/services/contabilidad.service"
+import { getMayorGeneral } from "@/lib/services/contabilidad.service"
 
 export default function MayorGeneralPage() {
   const [cuentaSeleccionada, setCuentaSeleccionada] = useState("")
@@ -20,6 +21,7 @@ export default function MayorGeneralPage() {
   const [movimientos, setMovimientos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMovimientos, setLoadingMovimientos] = useState(false)
+  
 
   useEffect(() => {
     loadCuentas()
@@ -46,7 +48,7 @@ export default function MayorGeneralPage() {
   const loadMovimientos = async () => {
     try {
       setLoadingMovimientos(true)
-      const data = await contabilidadService.getMovimientosMayor(cuentaSeleccionada, fechaInicio, fechaFin)
+      const data = await contabilidadService.getMayorGeneral(cuentaSeleccionada, fechaInicio, fechaFin)
       setMovimientos(data)
     } catch (error) {
       console.error("[v0] Error loading movimientos:", error)

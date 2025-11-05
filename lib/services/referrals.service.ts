@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/client"
 
-const PLACEHOLDER_EMPRESA_ID = "00000000-0000-0000-0000-000000000000"
+const PLACEHOLDER_EMPRESA_ID = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
 
 export interface Referral {
   id: string
@@ -112,7 +112,7 @@ export async function updateCommissionStatus(commissionId: string, status: strin
   if (error) throw error
 }
 
-export async function generateReferralCode(nombre: string): string {
+export async function generateReferralCode(nombre: string): Promise<string> {
   const base = nombre.replace(/\s+/g, "").toUpperCase().slice(0, 6)
   const random = Math.random().toString(36).substring(2, 6).toUpperCase()
   return `${base}${random}`

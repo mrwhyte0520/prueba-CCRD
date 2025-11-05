@@ -222,10 +222,16 @@ export function Sidebar() {
   const router = useRouter()
 
   useEffect(() => {
-    setShowImpuestos(hasImpuestosAccess())
-    setCurrentUser(getCurrentUser())
-    setIsPaidPlan(hasPaidPlan())
-    setPlanName(getCurrentPlanName())
+    const fetchUser = async () => {
+    const user = await getCurrentUser()  // Espera la promesa
+    setCurrentUser(user)                 // Ahora sí es User | null
+  }
+
+  fetchUser()  // Llama a la función async
+
+  setShowImpuestos(hasImpuestosAccess())
+  setIsPaidPlan(hasPaidPlan())
+  setPlanName(getCurrentPlanName())
   }, [])
 
   const getUserInitials = (name?: string) => {

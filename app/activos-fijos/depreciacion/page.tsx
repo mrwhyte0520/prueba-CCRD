@@ -44,7 +44,8 @@ export default function DepreciacionPage() {
   const loadDepreciacion = async () => {
     try {
       setLoading(true)
-      const data = await depreciacionService.getDepreciacionesByYear(Number.parseInt(selectedYear))
+        const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
+      const data = await depreciacionService.getDepreciacionesByYear(empresaId, Number.parseInt(selectedYear))
       const activosData = data.map((dep) => ({
         id: dep.activo_id,
         codigo: dep.activo?.codigo || "",

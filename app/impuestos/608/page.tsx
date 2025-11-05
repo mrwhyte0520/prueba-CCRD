@@ -29,26 +29,7 @@ interface Cancelacion {
   motivo: string
 }
 
-const mockCancelaciones: Cancelacion[] = [
-  {
-    id: "1",
-    tipoComprobante: "01",
-    ncfInicio: "B0100000050",
-    ncfFin: "B0100000055",
-    cantidad: 6,
-    fechaCancelacion: "2024-03-15",
-    motivo: "Comprobantes dañados",
-  },
-  {
-    id: "2",
-    tipoComprobante: "02",
-    ncfInicio: "B0200000100",
-    ncfFin: "B0200000100",
-    cantidad: 1,
-    fechaCancelacion: "2024-03-20",
-    motivo: "Error en emisión",
-  },
-]
+
 
 export default function Form608Page() {
   const [cancelaciones, setCancelaciones] = useState<Cancelacion[]>([])
@@ -72,7 +53,7 @@ export default function Form608Page() {
   const loadCancelaciones = async () => {
     try {
       setIsLoading(true)
-      const empresaId = "00000000-0000-0000-0000-000000000000" // TODO: Get from auth
+      const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501" // TODO: Get from auth
       const data = await impuestosService.getReportes608(empresaId, periodo)
 
       const cancelacionesFormateadas = data.map((r: any) => ({
@@ -106,16 +87,18 @@ export default function Form608Page() {
     try {
       const cantidad = Number.parseInt(newCancelacion.cantidad) || 1
 
-      const empresaId = "00000000-0000-0000-0000-000000000000" // TODO: Get from auth
+      const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501" // TODO: Get from auth
 
       await impuestosService.createReporte608(empresaId, {
-        tipo_comprobante: newCancelacion.tipoComprobante,
-        ncf_inicio: newCancelacion.ncfInicio,
-        ncf_fin: newCancelacion.ncfFin,
-        cantidad: cantidad,
-        fecha_cancelacion: newCancelacion.fechaCancelacion,
-        motivo: newCancelacion.motivo,
-      })
+  periodo: periodo, // tu estado de periodo
+  ncf_anulado: newCancelacion.ncfInicio, // o según corresponda
+  fecha_emision_ncf_anulado: newCancelacion.fechaCancelacion,
+  tipo_anulacion: newCancelacion.tipoComprobante,
+  ncf_modificado: newCancelacion.ncfFin, // opcional
+  monto_facturado: cantidad,
+  itbis_facturado: 0, // si no manejas ITBIS puedes poner 0
+  motivo_anulacion: newCancelacion.motivo,
+})
 
       await loadCancelaciones()
 
@@ -135,7 +118,7 @@ export default function Form608Page() {
 
   const handleDeleteCancelacion = async (cancelacionId: string) => {
     try {
-      const empresaId = "00000000-0000-0000-0000-000000000000" // TODO: Get from auth
+      const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501" // TODO: Get from auth
       await impuestosService.deleteReporte608(cancelacionId, empresaId)
       await loadCancelaciones()
     } catch (error) {

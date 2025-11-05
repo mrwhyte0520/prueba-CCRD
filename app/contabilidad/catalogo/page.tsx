@@ -21,14 +21,24 @@ export default function CatalogoCuentasPage() {
   const [cuentas, setCuentas] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
+  const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
 
-  const [formData, setFormData] = useState({
-    codigo: "",
-    nombre: "",
-    tipo: "",
-    nivel: "",
-    cuenta_padre_id: "",
-  })
+
+  const [formData, setFormData] = useState<{
+  codigo: string
+  nombre: string
+  tipo: string
+  nivel: string
+  cuenta_padre_id?: string
+  naturaleza?: "deudora" | "acreedora"
+}>({
+  codigo: "",
+  nombre: "",
+  tipo: "",
+  nivel: "",
+  cuenta_padre_id: undefined, // mejor undefined que ""
+  naturaleza: "deudora", // valor por defecto
+})
 
   useEffect(() => {
     loadCuentas()
@@ -62,14 +72,16 @@ export default function CatalogoCuentasPage() {
     }
 
     try {
-      await contabilidadService.createCuenta({
-        codigo: formData.codigo,
-        nombre: formData.nombre,
-        tipo: formData.tipo,
-        nivel: Number.parseInt(formData.nivel),
-        cuenta_padre_id: formData.cuenta_padre_id || null,
-        estado: "activa",
-      })
+      await contabilidadService.createCuenta(empresaId, {
+  codigo: formData.codigo,
+  nombre: formData.nombre,
+  tipo: formData.tipo,
+  nivel: Number.parseInt(formData.nivel),
+  cuenta_padre_id: formData.cuenta_padre_id || undefined,
+  naturaleza: formData.naturaleza || "deudora", // asegurar valor
+  balance: 0, // siempre iniciar en 0
+  activo: true, // cuenta activa por defecto
+})
 
       toast({
         title: "Éxito",
@@ -99,7 +111,7 @@ export default function CatalogoCuentasPage() {
     if (!confirm("¿Está seguro de eliminar esta cuenta?")) return
 
     try {
-      await contabilidadService.deleteCuenta(id)
+      await contabilidadService.deleteCuenta(empresaId,id)
       toast({
         title: "Éxito",
         description: "Cuenta eliminada correctamente",

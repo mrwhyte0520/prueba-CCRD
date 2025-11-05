@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabaseClient"
 
 // TODO: Get empresaId from authenticated user
-const DEFAULT_EMPRESA_ID = "00000000-0000-0000-0000-000000000000"
+const DEFAULT_EMPRESA_ID = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
 
 export async function getAllCobros() {
   return getCobros(DEFAULT_EMPRESA_ID)
@@ -190,4 +190,30 @@ export async function getCobrosByFecha(fechaInicio: string, fechaFin: string) {
   }
 
   return data || []
+}
+// 👇 Agrega esto arriba o al final del archivo cobros.service.ts
+export interface Cobro {
+  id: string
+  empresa_id: string
+  cliente_id: string
+  factura_id?: string | null
+  numero: string
+  fecha: string
+  monto: number
+  metodo_pago: string
+  referencia?: string | null
+  created_at?: string
+  updated_at?: string
+
+  // Relaciones opcionales
+  clientes?: {
+    id: string
+    nombre: string
+    email?: string | null
+    telefono?: string | null
+  }
+  facturas?: {
+    numero: string
+    total: number
+  }
 }

@@ -32,6 +32,7 @@ export default function ConducesPage() {
     fecha: new Date().toISOString().split("T")[0],
     observaciones: "",
   })
+  const DEFAULT_EMPRESA_ID = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501";
 
   useEffect(() => {
     loadData()
@@ -89,12 +90,17 @@ export default function ConducesPage() {
     }
 
     try {
-      await conducesService.createConduce({
-        ...formData,
-        items: items.map((item) => ({
-          producto_id: item.producto_id,
-          cantidad: item.cantidad,
-        })),
+      const numero = await conducesService.getNextConduceNumero(DEFAULT_EMPRESA_ID);
+    await conducesService.createConduce(DEFAULT_EMPRESA_ID, {
+  numero,
+  fecha: formData.fecha,
+  almacen_origen_id: formData.almacen_origen_id,
+  almacen_destino_id: formData.almacen_destino_id,
+  notas: formData.observaciones,
+  items: items.map((item) => ({
+    producto_id: item.producto_id,
+    cantidad: item.cantidad,
+  })),
       })
 
       alert("Conduce creado exitosamente")
@@ -299,11 +305,11 @@ export default function ConducesPage() {
                   ) : (
                     conduces.map((conduce) => (
                       <TableRow key={conduce.id}>
-                        <TableCell className="font-mono text-sm">{conduce.numero_conduce}</TableCell>
+                        <TableCell className="font-mono text-sm">{conduce.numero}</TableCell>
                         <TableCell>{new Date(conduce.fecha).toLocaleDateString("es-DO")}</TableCell>
                         <TableCell>{conduce.almacen_origen?.nombre || "N/A"}</TableCell>
                         <TableCell>{conduce.almacen_destino?.nombre || "N/A"}</TableCell>
-                        <TableCell className="text-right">{conduce.conduces_items?.length || 0}</TableCell>
+                        <TableCell className="text-right">{conduce.items?.length || 0}</TableCell>
                         <TableCell>{getEstadoBadge(conduce.estado)}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">

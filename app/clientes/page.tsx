@@ -18,6 +18,7 @@ export default function ClientesPage() {
   const [dialogAbierto, setDialogAbierto] = useState(false)
   const [clientes, setClientes] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
   const [formData, setFormData] = useState({
     nombre: "",
     rnc_cedula: "",
@@ -59,14 +60,15 @@ export default function ClientesPage() {
         return
       }
 
-      await clientesService.createCliente({
-        nombre: formData.nombre,
-        rnc_cedula: formData.rnc_cedula,
-        email: formData.email,
-        telefono: formData.telefono,
-        direccion: formData.direccion,
-        tipo: "regular",
-        estado: "activo",
+      await clientesService.createCliente(empresaId,{
+         nombre: formData.nombre,
+  rnc: formData.rnc_cedula, // ✅ aquí usamos el nombre correcto
+  email: formData.email,
+  telefono: formData.telefono,
+  direccion: formData.direccion,
+  limite_credito: 0, // si aplica
+  balance: 0,        // si aplica
+  activo: true,      // si aplica
       })
       toast({
         title: "Éxito",
@@ -89,7 +91,7 @@ export default function ClientesPage() {
     if (!confirm("¿Está seguro de eliminar este cliente?")) return
 
     try {
-      await clientesService.deleteCliente(id)
+      await clientesService.deleteCliente(id,empresaId)
       toast({
         title: "Éxito",
         description: "Cliente eliminado correctamente",

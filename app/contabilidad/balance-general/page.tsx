@@ -10,7 +10,7 @@ import * as reportesContablesService from "@/lib/services/reportes-contables.ser
 import { FileText } from "lucide-react"
 import { useState, useEffect } from "react"
 
-const PLACEHOLDER_EMPRESA_ID = "00000000-0000-0000-0000-000000000000"
+const PLACEHOLDER_EMPRESA_ID = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
 
 export default function BalanceGeneralPage() {
   const [fechaCorte, setFechaCorte] = useState(new Date().toISOString().split("T")[0])

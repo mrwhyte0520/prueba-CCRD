@@ -317,3 +317,44 @@ export async function createReporte606(reporteData: {
 
   return data
 }
+export async function getConfiguracionImpuestos(empresaId: string) {
+  const { data, error } = await supabase
+    .from("configuracion_impuestos")
+    .select("*")
+    .eq("empresa_id", empresaId)
+    .single()
+
+  if (error) {
+    console.error("[v0] Error fetching configuracion impuestos:", error)
+    throw error
+  }
+
+  return data
+}
+
+// Crear o actualizar configuración de impuestos
+export async function upsertConfiguracionImpuesto(
+  empresaId: string,
+  config: {
+    tipo_impuesto: "itbis" | "isr" | "tss" | "otros"
+    tasa: number
+    descripcion?: string | null
+    activo: boolean
+  }
+) {
+  const { data, error } = await supabase
+    .from("configuracion_impuestos")
+    .upsert({
+      empresa_id: empresaId,
+      ...config
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error("[v0] Error upserting configuracion impuesto:", error)
+    throw error
+  }
+
+  return data
+}

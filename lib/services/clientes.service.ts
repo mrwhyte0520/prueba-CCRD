@@ -110,6 +110,6 @@ export async function getClienteBalance(clienteId: string, empresaId: string): P
 // TODO: Get empresaId from authenticated user context
 export async function getAllClientes() {
   // Using a placeholder empresaId - should be replaced with actual user's empresa_id
-  const empresaId = "00000000-0000-0000-0000-000000000000"
+  const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
   return getClientes(empresaId)
 }

@@ -1,13 +1,12 @@
 "use client"
 
 import type React from "react"
-
 import { Bell, Search, LogOut, User, Menu, CheckCircle2, AlertCircle, Info } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { logout, getCurrentUser } from "@/lib/auth"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,47 +18,22 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useSidebar } from "@/components/sidebar-context"
 
-const mockNotifications = [
-  {
-    id: 1,
-    type: "success",
-    title: "Pago recibido",
-    message: "Se ha registrado un pago de RD$15,000.00",
-    time: "Hace 5 minutos",
-    read: false,
-  },
-  {
-    id: 2,
-    type: "warning",
-    title: "Producto bajo en stock",
-    message: "El producto 'Laptop Dell' tiene solo 3 unidades disponibles",
-    time: "Hace 1 hora",
-    read: false,
-  },
-  {
-    id: 3,
-    type: "info",
-    title: "Nueva factura pendiente",
-    message: "Factura #00125 requiere aprobación",
-    time: "Hace 2 horas",
-    read: false,
-  },
-  {
-    id: 4,
-    type: "success",
-    title: "Cierre de caja completado",
-    message: "El cierre de caja del día 28/10/2025 fue exitoso",
-    time: "Ayer",
-    read: true,
-  },
-]
-
 export function Header() {
   const router = useRouter()
-  const user = getCurrentUser()
+  const [user, setUser] = useState<any>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [showNotifications, setShowNotifications] = useState(false)
+  const [notifications, setNotifications] = useState<any[]>([]) // ← sin datos de prueba
   const { toggle } = useSidebar()
+
+  // Cargar usuario actual
+  useEffect(() => {
+    const fetchUser = async () => {
+      const u = await getCurrentUser()
+      setUser(u)
+    }
+    fetchUser()
+  }, [])
 
   const handleLogout = () => {
     logout()
@@ -70,7 +44,6 @@ export function Header() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
-      // Aquí se implementaría la lógica de búsqueda
       alert(`Buscando: ${searchQuery}`)
     }
   }
@@ -88,7 +61,7 @@ export function Header() {
     }
   }
 
-  const unreadCount = mockNotifications.filter((n) => !n.read).length
+  const unreadCount = notifications.filter((n) => !n.read).length
 
   return (
     <header className="flex h-16 items-center justify-between border-b-2 border-[#1e3a8a] bg-white px-6 shadow-sm">
@@ -107,7 +80,9 @@ export function Header() {
           />
         </form>
       </div>
+
       <div className="flex items-center gap-4">
+        {/* 🔔 Notificaciones */}
         <Popover open={showNotifications} onOpenChange={setShowNotifications}>
           <PopoverTrigger asChild>
             <Button variant="ghost" size="icon" className="relative hover:bg-[#1e3a8a]/10 text-[#1e3a8a]">
@@ -119,20 +94,22 @@ export function Header() {
               )}
             </Button>
           </PopoverTrigger>
+
           <PopoverContent className="w-96 p-0" align="end">
             <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
               <h3 className="font-semibold text-[#1e3a8a]">Notificaciones</h3>
               {unreadCount > 0 && <span className="text-xs text-gray-600">{unreadCount} nuevas</span>}
             </div>
+
             <div className="max-h-[400px] overflow-y-auto">
-              {mockNotifications.length === 0 ? (
+              {notifications.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 text-gray-500">
                   <Bell className="h-12 w-12 mb-2 opacity-50" />
                   <p className="text-sm">No hay notificaciones</p>
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100">
-                  {mockNotifications.map((notification) => (
+                  {notifications.map((notification) => (
                     <div
                       key={notification.id}
                       className={`flex gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors ${
@@ -155,6 +132,7 @@ export function Header() {
                 </div>
               )}
             </div>
+
             <div className="border-t border-gray-200 px-4 py-2">
               <Button variant="ghost" className="w-full text-sm text-[#1e3a8a] hover:bg-[#1e3a8a]/10">
                 Ver todas las notificaciones
@@ -163,6 +141,7 @@ export function Header() {
           </PopoverContent>
         </Popover>
 
+        {/* 👤 Usuario */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="hover:bg-[#1e3a8a]/10 text-[#1e3a8a]">
@@ -171,11 +150,12 @@ export function Header() {
               </div>
             </Button>
           </DropdownMenuTrigger>
+
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none text-[#1e3a8a]">{user?.name}</p>
-                <p className="text-xs leading-none text-gray-600">{user?.email}</p>
+                <p className="text-sm font-medium leading-none text-[#1e3a8a]">{user?.name || "Usuario"}</p>
+                <p className="text-xs leading-none text-gray-600">{user?.email || "sin-correo@example.com"}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

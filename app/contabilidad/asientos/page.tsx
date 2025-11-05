@@ -14,6 +14,7 @@ import { Plus, Eye, Trash2, Loader2 } from "lucide-react"
 import { useState, useEffect } from "react"
 import * as contabilidadService from "@/lib/services/contabilidad.service"
 import { useToast } from "@/hooks/use-toast"
+import { createAsientoContable } from "@/lib/services/asientos-contables.service"
 
 export default function AsientosContablesPage() {
   const [dialogAbierto, setDialogAbierto] = useState(false)
@@ -22,7 +23,7 @@ export default function AsientosContablesPage() {
   const [loading, setLoading] = useState(true)
   const [detalles, setDetalles] = useState<Array<{ cuenta_id: string; debito: number; credito: number }>>([])
   const { toast } = useToast()
-
+ const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
   const [formData, setFormData] = useState({
     fecha: new Date().toISOString().split("T")[0],
     descripcion: "",
@@ -97,19 +98,20 @@ export default function AsientosContablesPage() {
     }
 
     try {
-      await contabilidadService.createAsiento({
-        fecha: formData.fecha,
-        descripcion: formData.descripcion,
-        referencia: formData.referencia,
-        tipo: formData.tipo,
-        total: totalDebito,
-        estado: publicar ? "publicado" : "borrador",
-        detalles: detalles.map((d) => ({
-          cuenta_id: d.cuenta_id,
-          debito: d.debito || 0,
-          credito: d.credito || 0,
-        })),
-      })
+      
+    await createAsientoContable(empresaId, {
+  numero: "", 
+  fecha: formData.fecha,
+  tipo: formData.tipo as "diario" | "ajuste" | "cierre" | "apertura",
+  descripcion: formData.descripcion,
+  referencia: formData.referencia,
+  detalles: detalles.map(d => ({
+    cuenta_id: d.cuenta_id,
+    debe: d.debito || 0,
+    haber: d.credito || 0,
+    descripcion: "", // obligatorio
+  })),
+})
 
       toast({
         title: "Éxito",

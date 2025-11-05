@@ -30,7 +30,7 @@ export default function NCFPage() {
   const [secuencias, setSecuencias] = useState<SecuenciaNcf[]>([])
   const [dialogAbierto, setDialogAbierto] = useState(false)
   const [loading, setLoading] = useState(true)
-
+const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
   useEffect(() => {
     loadSecuencias()
   }, [])
@@ -38,7 +38,7 @@ export default function NCFPage() {
   const loadSecuencias = async () => {
     try {
       setLoading(true)
-      const data = await ncfService.getSecuenciasNCF()
+      const data = await ncfService.getSecuenciasNCF(empresaId)
       setSecuencias(
         data.map((seq) => ({
           id: seq.id,

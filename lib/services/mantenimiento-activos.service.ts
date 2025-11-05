@@ -85,3 +85,17 @@ export async function getProximosMantenimientos(empresaId: string, dias = 30) {
 
   return data
 }
+export async function getall(empresaId: string) {
+  const { data, error } = await supabase
+    .from("mantenimientos_activos")
+    .select(`*, activos_fijos:activo_fijo_id (codigo, nombre)`)
+    .eq("empresa_id", empresaId)
+    .order("fecha", { ascending: false });
+
+  if (error) {
+    console.error("[v0] Error fetching mantenimientos:", error);
+    throw error;
+  }
+
+  return data;
+}

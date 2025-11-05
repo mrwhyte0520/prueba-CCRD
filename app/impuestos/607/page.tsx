@@ -73,7 +73,7 @@ export default function Form607Page() {
   const loadVentas = async () => {
     try {
       setIsLoading(true)
-      const empresaId = "00000000-0000-0000-0000-000000000000" // TODO: Get from auth
+      const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501" // TODO: Get from auth
       const data = await impuestosService.getReportes607(empresaId, periodo)
 
       const ventasFormateadas = data.map((r: any) => ({
@@ -101,7 +101,7 @@ export default function Form607Page() {
       const montoGravado = Number.parseFloat(newVenta.montoGravado) || 0
       const itbis = Number.parseFloat(newVenta.itbis) || 0
 
-      const empresaId = "00000000-0000-0000-0000-000000000000" // TODO: Get from auth
+      const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501" // TODO: Get from auth
 
       await impuestosService.createReporte607(empresaId, {
         rnc_cedula: newVenta.rncCedula,
@@ -132,7 +132,7 @@ export default function Form607Page() {
 
   const handleDeleteVenta = async (ventaId: string) => {
     try {
-      const empresaId = "00000000-0000-0000-0000-000000000000" // TODO: Get from auth
+      const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501" // TODO: Get from auth
       await impuestosService.deleteReporte607(ventaId, empresaId)
       await loadVentas()
     } catch (error) {

@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/client"
 
-const PLACEHOLDER_EMPRESA_ID = "00000000-0000-0000-0000-000000000000"
+const PLACEHOLDER_EMPRESA_ID = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
 
 export interface Reporte607 {
   id: string
@@ -27,6 +27,11 @@ export interface Reporte607 {
 }
 
 export async function getReportes607(empresaId: string, periodo: string): Promise<Reporte607[]> {
+  if (!empresaId || !periodo) {
+    console.warn("[getReportes607] empresaId o periodo no definidos:", { empresaId, periodo })
+    return []
+  }
+
   const supabase = createClient()
   const { data, error } = await supabase
     .from("reportes_607")
@@ -35,9 +40,18 @@ export async function getReportes607(empresaId: string, periodo: string): Promis
     .eq("periodo", periodo)
     .order("fecha_comprobante", { ascending: false })
 
-  if (error) throw error
+  if (error) {
+    console.error("[Supabase error en getReportes607]", error)
+    throw new Error(`Error al obtener reportes 607: ${JSON.stringify(error)}`)
+  }
+
+  if (!data || data.length === 0) {
+    console.warn("[getReportes607] No se encontraron registros para:", { empresaId, periodo })
+  }
+
   return data || []
 }
+
 
 export async function getAllReportes607(): Promise<Reporte607[]> {
   return getReportes607(PLACEHOLDER_EMPRESA_ID, new Date().toISOString().slice(0, 7))

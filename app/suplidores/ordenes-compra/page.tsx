@@ -15,6 +15,7 @@ import * as suplidoresService from "@/lib/services/suplidores.service"
 import * as productosService from "@/lib/services/productos.service"
 import { Plus, Eye, FileText, Trash2 } from "lucide-react"
 import { useState, useEffect } from "react"
+import { createOrdenCompra } from "@/lib/services/ordenes-compra.service"
 
 export default function OrdenesCompraPage() {
   const [dialogAbierto, setDialogAbierto] = useState(false)
@@ -29,6 +30,7 @@ export default function OrdenesCompraPage() {
   const [cantidad, setCantidad] = useState("")
   const [precio, setPrecio] = useState("")
   const [observaciones, setObservaciones] = useState("")
+const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
 
   useEffect(() => {
     loadData()
@@ -51,6 +53,8 @@ export default function OrdenesCompraPage() {
       setLoading(false)
     }
   }
+
+  
 
   const agregarItem = () => {
     if (!selectedProducto || !cantidad || !precio) return
@@ -84,30 +88,34 @@ export default function OrdenesCompraPage() {
   }
 
   const crearOrden = async () => {
-    if (!selectedSuplidor || items.length === 0) {
-      alert("Debe seleccionar un suplidor y agregar al menos un producto")
-      return
-    }
-
-    try {
-      const { total } = calcularTotales()
-      await ordenesCompraService.create({
-        suplidor_id: selectedSuplidor,
-        fecha,
-        total,
-        estado: "pendiente",
-        observaciones,
-        items,
-      })
-
-      setDialogAbierto(false)
-      resetForm()
-      loadData()
-    } catch (error) {
-      console.error("Error creating order:", error)
-      alert("Error al crear la orden de compra")
-    }
+  if (!selectedSuplidor || items.length === 0) {
+    alert("Debe seleccionar un suplidor y agregar al menos un producto")
+    return
   }
+
+  try {
+    const { subtotal, itbis, total } = calcularTotales()
+
+    await ordenesCompraService.createOrdenCompra(empresaId, {
+      numero: "", // Si el backend genera el número, puedes dejarlo vacío o generarlo aquí
+      suplidor_id: selectedSuplidor,
+      fecha,
+      subtotal,
+      itbis,
+      total,
+      observaciones,
+      items,
+    })
+
+    setDialogAbierto(false)
+    resetForm()
+    loadData()
+  } catch (error) {
+    console.error("Error creating order:", error)
+    alert("Error al crear la orden de compra")
+  }
+}
+
 
   const resetForm = () => {
     setSelectedSuplidor("")

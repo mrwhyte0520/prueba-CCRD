@@ -97,3 +97,31 @@ export async function validarNCF(empresaId: string, ncf: string): Promise<boolea
 
   return secuencia >= data.secuencia_desde && secuencia <= data.secuencia_hasta
 }
+
+export async function getSecuenciasNCF(empresaId: string) {
+  const data = await getSeriesNCF(empresaId)
+  return data.map((serie) => ({
+    id: serie.id,
+    tipo_comprobante: serie.tipo_comprobante,
+    serie: serie.tipo_comprobante, // o usa 'serie' si lo tienes
+    desde: serie.secuencia_desde,
+    hasta: serie.secuencia_hasta,
+    actual: serie.secuencia_actual,
+    fecha_vencimiento: serie.fecha_vencimiento,
+    activa: serie.activa,
+  }))
+}
+export async function deleteSerieNCF(empresaId: string, serieId: string) {
+  const { error } = await supabase
+    .from("series_ncf")
+    .delete()
+    .eq("id", serieId)
+    .eq("empresa_id", empresaId);
+
+  if (error) {
+    console.error("Error deleting serie NCF:", error);
+    throw error;
+  }
+
+  return true;
+}

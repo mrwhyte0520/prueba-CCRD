@@ -43,7 +43,7 @@ export default function ConfiguracionImpuestosPage() {
   const loadConfiguracion = async () => {
     try {
       setIsLoading(true)
-      const empresaId = "00000000-0000-0000-0000-000000000000" // TODO: Get from auth
+      const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501" // TODO: Get from auth
       const data = await impuestosService.getConfiguracionImpuestos(empresaId)
 
       if (data && data.length > 0) {
@@ -77,7 +77,7 @@ export default function ConfiguracionImpuestosPage() {
   const handleSaveConfiguracion = async () => {
     try {
       setIsSaving(true)
-      const empresaId = "00000000-0000-0000-0000-000000000000" // TODO: Get from auth
+      const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501" // TODO: Get from auth
 
       // Save ITBIS configuration
       await impuestosService.upsertConfiguracionImpuesto(empresaId, {

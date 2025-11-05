@@ -88,6 +88,6 @@ export async function deleteAlmacen(almacenId: string, empresaId: string) {
 }
 
 export async function getAllAlmacenes() {
-  const DEFAULT_EMPRESA_ID = "00000000-0000-0000-0000-000000000000"
+  const DEFAULT_EMPRESA_ID = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
   return getAlmacenes(DEFAULT_EMPRESA_ID)
 }

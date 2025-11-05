@@ -23,7 +23,7 @@ export default function PagosPage() {
   const [ordenesSupl, setOrdenesSupl] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [itemsPago, setItemsPago] = useState<any[]>([])
-
+const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
   const [formData, setFormData] = useState({
     fecha: new Date().toISOString().split("T")[0],
     metodo_pago: "",
@@ -61,7 +61,7 @@ export default function PagosPage() {
 
   const loadOrdenesSuplidor = async (suplidorId: string) => {
     try {
-      const ordenes = await cuentasPagarService.getCuentasPagarBySuplidor(suplidorId)
+      const ordenes = await cuentasPagarService.getCuentasPorPagarBySuplidor(suplidorId,empresaId)
       setOrdenesSupl(ordenes.filter((o) => o.estado !== "pagada"))
     } catch (error) {
       console.error("[v0] Error loading ordenes:", error)
@@ -102,12 +102,12 @@ export default function PagosPage() {
 
     try {
       await pagosService.createPago({
-        suplidor_id: suplidorSeleccionado,
-        fecha: formData.fecha,
-        monto_total: montoTotal,
-        metodo_pago: formData.metodo_pago,
-        referencia: formData.referencia,
-        items: itemsPago,
+         suplidor_id: suplidorSeleccionado,
+  fecha: formData.fecha,
+  monto: montoTotal, // <- renombrar a "monto"
+  metodo_pago: formData.metodo_pago,
+  referencia: formData.referencia,
+ 
       })
 
       alert("Pago registrado exitosamente")

@@ -1,14 +1,15 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Sidebar } from "@/components/sidebar"
 import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import * as activosFijosService  from "@/lib/services/activos-fijos.service"
 import {
   Dialog,
   DialogContent,
@@ -18,10 +19,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Plus, Search, Edit, Trash2, FileText, TrendingUp, AlertCircle } from "lucide-react"
-import * as activosFijosService from "@/lib/services/activos-fijos.service"
+import { Plus, Search, Edit, Trash2 } from "lucide-react"
 
+type EstadoActivo = "activo" | "en_mantenimiento" | "dado_de_baja" | "vendido";
 interface ActivoFijo {
+  
   id: string
   codigo: string
   descripcion: string
@@ -34,8 +36,9 @@ interface ActivoFijo {
   depreciacion_acumulada: number
   valor_neto: number
   ubicacion: string
-  estado: "Activo" | "Depreciado" | "Vendido" | "Dado de Baja"
+  estado: EstadoActivo;
   responsable: string
+   
 }
 
 export default function RegistroActivosPage() {
@@ -45,7 +48,9 @@ export default function RegistroActivosPage() {
   const [filterEstado, setFilterEstado] = useState("all")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [loading, setLoading] = useState(true)
-
+  const [editingActivo, setEditingActivo] = useState<ActivoFijo | null>(null)
+   const empresaId = "00000000-0000-0000-0000-000000000000"
+   
   const [formData, setFormData] = useState({
     codigo: "",
     descripcion: "",
@@ -66,10 +71,11 @@ export default function RegistroActivosPage() {
   const loadActivos = async () => {
     try {
       setLoading(true)
-      const data = await activosFijosService.getActivos()
+      const data = await activosFijosService.getActivosFijos(empresaId)
       setActivos(data)
     } catch (error) {
       console.error("Error loading activos:", error)
+      alert("Error al cargar los activos.")
     } finally {
       setLoading(false)
     }
@@ -79,28 +85,75 @@ export default function RegistroActivosPage() {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleSaveActivo = async () => {
-    try {
-      const costoAdquisicion = Number.parseFloat(formData.costoAdquisicion)
-      const vidaUtil = Number.parseInt(formData.vidaUtil)
-      const valorResidual = Number.parseFloat(formData.valorResidual)
+  const openDialogForEdit = (activo: ActivoFijo) => {
+    setEditingActivo(activo)
+    setFormData({
+      codigo: activo.codigo,
+      descripcion: activo.descripcion,
+      categoria: activo.categoria,
+      fechaAdquisicion: activo.fecha_adquisicion,
+      costoAdquisicion: activo.costo_adquisicion.toString(),
+      vidaUtil: activo.vida_util_anos.toString(),
+      valorResidual: activo.valor_residual.toString(),
+      metodoDepreciacion: activo.metodo_depreciacion,
+      ubicacion: activo.ubicacion,
+      responsable: activo.responsable,
+    })
+    setIsDialogOpen(true)
+  }
 
-      await activosFijosService.createActivo({
-        codigo: formData.codigo,
-        descripcion: formData.descripcion,
-        categoria: formData.categoria,
-        fecha_adquisicion: formData.fechaAdquisicion,
-        costo_adquisicion: costoAdquisicion,
-        vida_util_anos: vidaUtil,
-        valor_residual: valorResidual,
-        metodo_depreciacion: formData.metodoDepreciacion as any,
-        ubicacion: formData.ubicacion,
-        responsable: formData.responsable,
-      })
+  const handleSaveActivo = async () => {
+    if (!formData.codigo || !formData.descripcion || !formData.categoria) {
+      alert("Por favor complete todos los campos obligatorios (Código, Descripción, Categoría).")
+      return
+    }
+
+    const costoAdquisicion = parseFloat(formData.costoAdquisicion)
+    const vidaUtil = parseInt(formData.vidaUtil)
+    const valorResidual = parseFloat(formData.valorResidual)
+
+    if (isNaN(costoAdquisicion) || isNaN(vidaUtil) || isNaN(valorResidual)) {
+      alert("Ingrese valores numéricos válidos para costo, vida útil y valor residual.")
+      return
+    }
+
+    try {
+      if (editingActivo) {
+        
+        await activosFijosService.updateActivoFijo(editingActivo.id,empresaId, {
+          codigo: formData.codigo,
+          descripcion: formData.descripcion,
+          categoria: formData.categoria,
+          fecha_adquisicion: formData.fechaAdquisicion,
+          costo_adquisicion: costoAdquisicion,
+          vida_util_anos: vidaUtil,
+          valor_residual: valorResidual,
+          metodo_depreciacion: formData.metodoDepreciacion as "lineal" | "acelerada" | "unidades_produccion",
+          ubicacion: formData.ubicacion,
+          responsable: formData.responsable,
+        })
+      } else {
+        await activosFijosService.createActivoFijo(empresaId,{
+           nombre: formData.descripcion, // o algún otro campo
+  codigo: formData.codigo,
+  descripcion: formData.descripcion,
+  categoria: formData.categoria,
+  fecha_adquisicion: formData.fechaAdquisicion,
+  costo_adquisicion: costoAdquisicion,
+  vida_util_anos: vidaUtil,
+  valor_residual: valorResidual,
+  metodo_depreciacion: formData.metodoDepreciacion as "lineal" | "acelerada" | "unidades_produccion",
+  ubicacion: formData.ubicacion,
+  responsable: formData.responsable,
+  estado: "activo", // valor por defecto al crear
+  valor_libro: costoAdquisicion - valorResidual, // o 0 si quieres calcular después
+  depreciacion_acumulada: 0, // al crear, generalmente empieza en 0
+        })
+      }
 
       await loadActivos()
       setIsDialogOpen(false)
-
+      setEditingActivo(null)
       setFormData({
         codigo: "",
         descripcion: "",
@@ -121,9 +174,8 @@ export default function RegistroActivosPage() {
 
   const handleDeleteActivo = async (id: string) => {
     if (!confirm("¿Está seguro de eliminar este activo?")) return
-
     try {
-      await activosFijosService.deleteActivo(id)
+      await  activosFijosService.deleteActivoFijo(id,empresaId)
       await loadActivos()
     } catch (error) {
       console.error("Error deleting activo:", error)
@@ -131,20 +183,49 @@ export default function RegistroActivosPage() {
     }
   }
 
-  const filteredActivos = activos.filter((activo) => {
-    const matchesSearch =
-      activo.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      activo.codigo.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategoria = filterCategoria === "all" || activo.categoria === filterCategoria
-    const matchesEstado = filterEstado === "all" || activo.estado === filterEstado
-    return matchesSearch && matchesCategoria && matchesEstado
-  })
+  const filteredActivos = useMemo(() => {
+    return activos.filter((activo) => {
+      const matchesSearch =
+        activo.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        activo.codigo.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesCategoria = filterCategoria === "all" || activo.categoria === filterCategoria
+      const matchesEstado = filterEstado === "all" || activo.estado === filterEstado
+      return matchesSearch && matchesCategoria && matchesEstado
+    })
+  }, [activos, searchTerm, filterCategoria, filterEstado])
 
-  const totalCostoAdquisicion = activos.reduce((sum, a) => sum + a.costo_adquisicion, 0)
-  const totalDepreciacionAcumulada = activos.reduce((sum, a) => sum + a.depreciacion_acumulada, 0)
-  const totalValorNeto = activos.reduce((sum, a) => sum + a.valor_neto, 0)
+  const totalCostoAdquisicion = useMemo(
+    () => activos.reduce((sum, a) => sum + a.costo_adquisicion, 0),
+    [activos]
+  )
+  const totalDepreciacionAcumulada = useMemo(
+    () => activos.reduce((sum, a) => sum + a.depreciacion_acumulada, 0),
+    [activos]
+  )
+  const totalValorNeto = useMemo(() => activos.reduce((sum, a) => sum + a.valor_neto, 0), [activos])
 
-  const categorias = Array.from(new Set(activos.map((a) => a.categoria)))
+  const categorias = useMemo(() => Array.from(new Set(activos.map((a) => a.categoria))), [activos])
+const estadoMap: Record<string, string> = {
+  activo: "Activo",
+  en_mantenimiento: "Depreciado",
+  vendido: "Vendido",
+  dado_de_baja: "Dado de Baja",
+};
+  const getBadgeVariant = (estado: string) => {
+  switch (estado) {
+    case "activo":
+      return "default";
+    case "en_mantenimiento":
+      return "secondary";
+    case "vendido":
+      return "destructive";
+    case "dado_de_baja":
+      return "outline";
+    default:
+      return "default";
+  }
+};
+
 
   if (loading) {
     return (
@@ -174,289 +255,223 @@ export default function RegistroActivosPage() {
                 <h1 className="text-3xl font-bold">Registro de Activos Fijos</h1>
                 <p className="text-muted-foreground">Gestión y control de activos fijos de la empresa</p>
               </div>
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <Dialog
+                open={isDialogOpen}
+                onOpenChange={(open) => {
+                  setIsDialogOpen(open)
+                  if (!open) setEditingActivo(null)
+                }}
+              >
                 <DialogTrigger asChild>
                   <Button>
                     <Plus className="mr-2 h-4 w-4" />
-                    Nuevo Activo
+                    {editingActivo ? "Editar Activo" : "Nuevo Activo"}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>Registrar Nuevo Activo Fijo</DialogTitle>
+                    <DialogTitle>{editingActivo ? "Editar Activo Fijo" : "Registrar Nuevo Activo Fijo"}</DialogTitle>
                     <DialogDescription>Complete la información del activo fijo</DialogDescription>
                   </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="codigo">Código</Label>
-                        <Input
-                          id="codigo"
-                          placeholder="AF-XXX"
-                          value={formData.codigo}
-                          onChange={(e) => handleInputChange("codigo", e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="categoria">Categoría</Label>
-                        <Select
-                          value={formData.categoria}
-                          onValueChange={(value) => handleInputChange("categoria", value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Equipos de Computación">Equipos de Computación</SelectItem>
-                            <SelectItem value="Vehículos">Vehículos</SelectItem>
-                            <SelectItem value="Muebles y Enseres">Muebles y Enseres</SelectItem>
-                            <SelectItem value="Maquinaria">Maquinaria</SelectItem>
-                            <SelectItem value="Edificios">Edificios</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+
+                  {/* Formulario */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
+                    <div className="flex flex-col">
+                      <Label htmlFor="codigo">Código</Label>
+                      <Input
+                        id="codigo"
+                        value={formData.codigo}
+                        onChange={(e) => handleInputChange("codigo", e.target.value)}
+                      />
                     </div>
-                    <div className="space-y-2">
+                    <div className="flex flex-col">
                       <Label htmlFor="descripcion">Descripción</Label>
                       <Input
                         id="descripcion"
-                        placeholder="Descripción detallada del activo"
                         value={formData.descripcion}
                         onChange={(e) => handleInputChange("descripcion", e.target.value)}
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="fechaAdquisicion">Fecha de Adquisición</Label>
-                        <Input
-                          id="fechaAdquisicion"
-                          type="date"
-                          value={formData.fechaAdquisicion}
-                          onChange={(e) => handleInputChange("fechaAdquisicion", e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="costoAdquisicion">Costo de Adquisición</Label>
-                        <Input
-                          id="costoAdquisicion"
-                          type="number"
-                          placeholder="0.00"
-                          value={formData.costoAdquisicion}
-                          onChange={(e) => handleInputChange("costoAdquisicion", e.target.value)}
-                        />
-                      </div>
+                    <div className="flex flex-col">
+                      <Label htmlFor="categoria">Categoría</Label>
+                      <Input
+                        id="categoria"
+                        value={formData.categoria}
+                        onChange={(e) => handleInputChange("categoria", e.target.value)}
+                      />
                     </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="vidaUtil">Vida Útil (años)</Label>
-                        <Input
-                          id="vidaUtil"
-                          type="number"
-                          placeholder="0"
-                          value={formData.vidaUtil}
-                          onChange={(e) => handleInputChange("vidaUtil", e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="valorResidual">Valor Residual</Label>
-                        <Input
-                          id="valorResidual"
-                          type="number"
-                          placeholder="0.00"
-                          value={formData.valorResidual}
-                          onChange={(e) => handleInputChange("valorResidual", e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="metodo">Método Depreciación</Label>
-                        <Select
-                          value={formData.metodoDepreciacion}
-                          onValueChange={(value) => handleInputChange("metodoDepreciacion", value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Línea Recta">Línea Recta</SelectItem>
-                            <SelectItem value="Saldos Decrecientes">Saldos Decrecientes</SelectItem>
-                            <SelectItem value="Suma de Dígitos">Suma de Dígitos</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                    <div className="flex flex-col">
+                      <Label htmlFor="fechaAdquisicion">Fecha de Adquisición</Label>
+                      <Input
+                        id="fechaAdquisicion"
+                        type="date"
+                        value={formData.fechaAdquisicion}
+                        onChange={(e) => handleInputChange("fechaAdquisicion", e.target.value)}
+                      />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="ubicacion">Ubicación</Label>
-                        <Input
-                          id="ubicacion"
-                          placeholder="Ubicación física"
-                          value={formData.ubicacion}
-                          onChange={(e) => handleInputChange("ubicacion", e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="responsable">Responsable</Label>
-                        <Input
-                          id="responsable"
-                          placeholder="Nombre del responsable"
-                          value={formData.responsable}
-                          onChange={(e) => handleInputChange("responsable", e.target.value)}
-                        />
-                      </div>
+                    <div className="flex flex-col">
+                      <Label htmlFor="costoAdquisicion">Costo de Adquisición</Label>
+                      <Input
+                        id="costoAdquisicion"
+                        type="number"
+                        value={formData.costoAdquisicion}
+                        onChange={(e) => handleInputChange("costoAdquisicion", e.target.value)}
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <Label htmlFor="vidaUtil">Vida Útil (años)</Label>
+                      <Input
+                        id="vidaUtil"
+                        type="number"
+                        value={formData.vidaUtil}
+                        onChange={(e) => handleInputChange("vidaUtil", e.target.value)}
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <Label htmlFor="valorResidual">Valor Residual</Label>
+                      <Input
+                        id="valorResidual"
+                        type="number"
+                        value={formData.valorResidual}
+                        onChange={(e) => handleInputChange("valorResidual", e.target.value)}
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <Label htmlFor="metodoDepreciacion">Método de Depreciación</Label>
+                      <Input
+                        id="metodoDepreciacion"
+                        value={formData.metodoDepreciacion}
+                        onChange={(e) => handleInputChange("metodoDepreciacion", e.target.value)}
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <Label htmlFor="ubicacion">Ubicación</Label>
+                      <Input
+                        id="ubicacion"
+                        value={formData.ubicacion}
+                        onChange={(e) => handleInputChange("ubicacion", e.target.value)}
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <Label htmlFor="responsable">Responsable</Label>
+                      <Input
+                        id="responsable"
+                        value={formData.responsable}
+                        onChange={(e) => handleInputChange("responsable", e.target.value)}
+                      />
                     </div>
                   </div>
+
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                       Cancelar
                     </Button>
-                    <Button onClick={handleSaveActivo}>Guardar Activo</Button>
+                    <Button onClick={handleSaveActivo}>{editingActivo ? "Guardar cambios" : "Registrar"}</Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Activos</CardTitle>
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{activos.length}</div>
-                  <p className="text-xs text-muted-foreground">Registrados en el sistema</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Costo Total</CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">RD$ {totalCostoAdquisicion.toLocaleString()}</div>
-                  <p className="text-xs text-muted-foreground">Costo de adquisición</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Depreciación Acumulada</CardTitle>
-                  <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">RD$ {totalDepreciacionAcumulada.toLocaleString()}</div>
-                  <p className="text-xs text-muted-foreground">Total depreciado</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Valor Neto</CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">RD$ {totalValorNeto.toLocaleString()}</div>
-                  <p className="text-xs text-muted-foreground">Valor en libros</p>
-                </CardContent>
-              </Card>
-            </div>
-
+            {/* Filtros */}
             <Card>
               <CardHeader>
-                <CardTitle>Activos Fijos</CardTitle>
-                <CardDescription>Lista de todos los activos fijos registrados</CardDescription>
+                <CardTitle>Filtros</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="mb-4 flex flex-col gap-4 md:flex-row">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Buscar por código o descripción..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-8"
-                    />
-                  </div>
-                  <Select value={filterCategoria} onValueChange={setFilterCategoria}>
-                    <SelectTrigger className="w-full md:w-[200px]">
-                      <SelectValue placeholder="Categoría" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas las categorías</SelectItem>
-                      {categorias.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
-                          {cat}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select value={filterEstado} onValueChange={setFilterEstado}>
-                    <SelectTrigger className="w-full md:w-[200px]">
-                      <SelectValue placeholder="Estado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos los estados</SelectItem>
-                      <SelectItem value="Activo">Activo</SelectItem>
-                      <SelectItem value="Depreciado">Depreciado</SelectItem>
-                      <SelectItem value="Vendido">Vendido</SelectItem>
-                      <SelectItem value="Dado de Baja">Dado de Baja</SelectItem>
-                    </SelectContent>
-                  </Select>
+              <CardContent className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="flex-1 flex items-center space-x-2">
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por código o descripción..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
                 </div>
+                <Select
+                  value={filterCategoria}
+                  onValueChange={(value) => setFilterCategoria(value)}
+                >
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Categoría" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    {categorias.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={filterEstado} onValueChange={(value) => setFilterEstado(value)}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="Activo">Activo</SelectItem>
+                    <SelectItem value="Depreciado">Depreciado</SelectItem>
+                    <SelectItem value="Vendido">Vendido</SelectItem>
+                    <SelectItem value="Dado de Baja">Dado de Baja</SelectItem>
+                  </SelectContent>
+                </Select>
+              </CardContent>
+            </Card>
 
-                <div className="rounded-md border">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b bg-muted/50">
-                          <th className="p-3 text-left text-sm font-medium">Código</th>
-                          <th className="p-3 text-left text-sm font-medium">Descripción</th>
-                          <th className="p-3 text-left text-sm font-medium">Categoría</th>
-                          <th className="p-3 text-left text-sm font-medium">Fecha Adq.</th>
-                          <th className="p-3 text-right text-sm font-medium">Costo</th>
-                          <th className="p-3 text-right text-sm font-medium">Dep. Acum.</th>
-                          <th className="p-3 text-right text-sm font-medium">Valor Neto</th>
-                          <th className="p-3 text-left text-sm font-medium">Estado</th>
-                          <th className="p-3 text-center text-sm font-medium">Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredActivos.map((activo) => (
-                          <tr key={activo.id} className="border-b hover:bg-muted/50">
-                            <td className="p-3 text-sm font-medium">{activo.codigo}</td>
-                            <td className="p-3 text-sm">
-                              <div>
-                                <div className="font-medium">{activo.descripcion}</div>
-                                <div className="text-xs text-muted-foreground">{activo.ubicacion}</div>
-                              </div>
-                            </td>
-                            <td className="p-3 text-sm">{activo.categoria}</td>
-                            <td className="p-3 text-sm">{new Date(activo.fecha_adquisicion).toLocaleDateString()}</td>
-                            <td className="p-3 text-right text-sm">RD$ {activo.costo_adquisicion.toLocaleString()}</td>
-                            <td className="p-3 text-right text-sm text-red-600">
-                              RD$ {activo.depreciacion_acumulada.toLocaleString()}
-                            </td>
-                            <td className="p-3 text-right text-sm font-medium">
-                              RD$ {activo.valor_neto.toLocaleString()}
-                            </td>
-                            <td className="p-3 text-sm">
-                              <Badge variant={activo.estado === "Activo" ? "default" : "secondary"}>
-                                {activo.estado}
-                              </Badge>
-                            </td>
-                            <td className="p-3">
-                              <div className="flex items-center justify-center gap-2">
-                                <Button variant="ghost" size="icon">
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" onClick={() => handleDeleteActivo(activo.id)}>
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+            {/* Tabla de activos */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Lista de Activos</CardTitle>
+              </CardHeader>
+              <CardContent className="overflow-x-auto">
+                <table className="w-full table-auto border-collapse">
+                  <thead>
+                    <tr className="bg-muted">
+                      <th className="p-2 border">Código</th>
+                      <th className="p-2 border">Descripción</th>
+                      <th className="p-2 border">Categoría</th>
+                      <th className="p-2 border">Costo</th>
+                      <th className="p-2 border">Depreciación</th>
+                      <th className="p-2 border">Valor Neto</th>
+                      <th className="p-2 border">Estado</th>
+                      <th className="p-2 border">Responsable</th>
+                      <th className="p-2 border">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredActivos.map((activo) => (
+                      <tr key={activo.id} className="hover:bg-muted/50">
+                        <td className="p-2 border">{activo.codigo}</td>
+                        <td className="p-2 border">{activo.descripcion}</td>
+                        <td className="p-2 border">{activo.categoria}</td>
+                        <td className="p-2 border">{activo.costo_adquisicion}</td>
+                        <td className="p-2 border">{activo.depreciacion_acumulada}</td>
+                        <td className="p-2 border">{activo.valor_neto}</td>
+                        <td className="p-2 border">
+                          <Badge variant={getBadgeVariant(activo.estado)}>{activo.estado}</Badge>
+                        </td>
+                        <td className="p-2 border">{activo.responsable}</td>
+                        <td className="p-2 border flex space-x-2">
+                          <Button size="sm" variant="outline" onClick={() => openDialogForEdit(activo)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={() => handleDeleteActivo(activo.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="bg-muted">
+                      <td className="p-2 border font-bold">Totales</td>
+                      <td colSpan={2}></td>
+                      <td className="p-2 border font-bold">{totalCostoAdquisicion}</td>
+                      <td className="p-2 border font-bold">{totalDepreciacionAcumulada}</td>
+                      <td className="p-2 border font-bold">{totalValorNeto}</td>
+                      <td colSpan={3}></td>
+                    </tr>
+                  </tfoot>
+                </table>
               </CardContent>
             </Card>
           </div>

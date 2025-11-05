@@ -137,7 +137,12 @@ export function getPlanLimits(): Plan["limits"] {
 
 export function canAddMore(module: keyof Plan["limits"], currentCount: number): boolean {
   const limits = getPlanLimits()
-  return currentCount < limits[module]
+  const limit = limits[module]
+
+  // Si no hay límite definido (es ilimitado), permitir agregar
+  if (limit === undefined) return true
+
+  return currentCount < limit
 }
 
 export async function checkSubscriptionLimit(
@@ -156,7 +161,7 @@ export async function checkSubscriptionLimit(
   }
 
   const limitKey = moduleMap[module]
-  const limit = plan.limits[limitKey]
+  const limit = plan.limits[limitKey] ?? Infinity // 👈 si undefined → ilimitado
 
   return currentCount < limit
 }

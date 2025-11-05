@@ -19,11 +19,23 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Plus, Search, Edit, Trash2, FileText, TrendingUp, AlertCircle } from "lucide-react"
-import { activosFijosService } from "@/lib/services/activos-fijos.service"
-
+import * as activosFijosService from "@/lib/services/activos-fijos.service"
+const mapMetodoDepreciacion = (value: string) => {
+  switch (value) {
+    case "Línea Recta":
+      return "lineal";
+    case "Saldos Decrecientes":
+      return "acelerada";
+    case "Suma de Dígitos":
+      return "unidades_produccion";
+    default:
+      return "lineal"; // valor por defecto
+  }
+}
 interface ActivoFijo {
   id: string
   codigo: string
+  nombre: string
   descripcion: string
   categoria: string
   fecha_adquisicion: string
@@ -48,6 +60,7 @@ export default function RegistroActivosPage() {
 
   const [formData, setFormData] = useState({
     codigo: "",
+    nombre:"",
     descripcion: "",
     categoria: "",
     fechaAdquisicion: "",
@@ -64,9 +77,10 @@ export default function RegistroActivosPage() {
   }, [])
 
   const loadActivos = async () => {
+    const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
     try {
       setLoading(true)
-      const data = await activosFijosService.getAll()
+      const data = await activosFijosService.getActivosFijos(empresaId)
       setActivos(data)
     } catch (error) {
       console.error("Error loading activos:", error)
@@ -80,25 +94,33 @@ export default function RegistroActivosPage() {
   }
 
   const handleSaveActivo = async () => {
+    
     try {
-      await activosFijosService.create({
-        codigo: formData.codigo,
-        descripcion: formData.descripcion,
-        categoria: formData.categoria,
-        fecha_adquisicion: formData.fechaAdquisicion,
-        costo_adquisicion: Number.parseFloat(formData.costoAdquisicion),
-        vida_util: Number.parseInt(formData.vidaUtil),
-        valor_residual: Number.parseFloat(formData.valorResidual),
-        metodo_depreciacion: formData.metodoDepreciacion,
-        ubicacion: formData.ubicacion,
-        responsable: formData.responsable,
-        estado: "activo",
-      })
+      const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
+    await activosFijosService.createActivoFijo(empresaId, {
+  codigo: formData.codigo,
+  nombre: formData.nombre,          // <-- obligatorio
+  descripcion: formData.descripcion ?? null,
+  categoria: formData.categoria,
+  fecha_adquisicion: formData.fechaAdquisicion,
+  costo_adquisicion: Number.parseFloat(formData.costoAdquisicion),
+  vida_util_anos: Number.parseInt(formData.vidaUtil),
+  valor_residual: Number.parseFloat(formData.valorResidual),
+  metodo_depreciacion: mapMetodoDepreciacion(formData.metodoDepreciacion),
+  ubicacion: formData.ubicacion ?? null,
+  responsable: formData.responsable ?? null,
+  estado: "activo",
+  valor_libro: Number.parseFloat(formData.costoAdquisicion),
+  depreciacion_acumulada: 0
+})
+
+
 
       setIsDialogOpen(false)
       setFormData({
         codigo: "",
         descripcion: "",
+        nombre:"",
         categoria: "",
         fechaAdquisicion: "",
         costoAdquisicion: "",
@@ -116,10 +138,11 @@ export default function RegistroActivosPage() {
   }
 
   const handleDeleteActivo = async (id: string) => {
+    const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
     if (!confirm("¿Está seguro de eliminar este activo?")) return
 
     try {
-      await activosFijosService.delete(id)
+      await activosFijosService.deleteActivoFijo(empresaId, id)
       loadActivos()
     } catch (error) {
       console.error("Error deleting activo:", error)

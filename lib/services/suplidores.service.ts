@@ -112,12 +112,12 @@ export async function getSuplidorBalance(suplidorId: string, empresaId: string):
 // TODO: Get empresaId from authenticated user context
 export async function getAll() {
   // Using a placeholder empresaId - should be replaced with actual user's empresa_id
-  const empresaId = "00000000-0000-0000-0000-000000000000"
+  const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
   return getSuplidores(empresaId)
 }
 
 export async function getAllSuplidores() {
   // Using a placeholder empresaId - should be replaced with actual user's empresa_id
-  const empresaId = "00000000-0000-0000-0000-000000000000"
+  const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
   return getSuplidores(empresaId)
 }

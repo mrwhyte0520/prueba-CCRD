@@ -240,7 +240,20 @@ export async function getNextConduceNumero(empresaId: string): Promise<string> {
   return "CON-00001"
 }
 
-export async function getAllConduces() {
-  const DEFAULT_EMPRESA_ID = "00000000-0000-0000-0000-000000000000"
-  return getConduces(DEFAULT_EMPRESA_ID)
+export async function getAllConduces(empresaId?: string) {
+  
+ const DEFAULT_EMPRESA_ID = "00000000-0000-0000-0000-000000000000";
+  const id = empresaId || DEFAULT_EMPRESA_ID;
+
+  try {
+    const response = await fetch(`/api/conduces?empresaId=${id}`);
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`HTTP ${response.status}: ${text}`);
+    }
+    return getConduces(id);
+  } catch (error) {
+    console.error("[v0] Error fetching conduces:", error);
+    throw error;
+  }
 }

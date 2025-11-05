@@ -81,12 +81,17 @@ export async function getCuentaById(cuentaId: string, empresaId: string) {
 }
 
 // Create cuenta
-export async function createCuenta(empresaId: string, cuentaData: Omit<CuentaContable, "id" | "empresa_id">) {
+export async function createCuenta(
+  empresaId: string,
+  cuentaData: Omit<CuentaContable, "id" | "empresa_id">
+) {
   const { data, error } = await supabase
     .from("cuentas_contables")
     .insert({
       empresa_id: empresaId,
       ...cuentaData,
+      // Aseguramos que cuenta_padre_id sea undefined si es null
+      cuenta_padre_id: cuentaData.cuenta_padre_id ?? undefined,
     })
     .select()
     .single()
@@ -370,11 +375,11 @@ export async function getMayorGeneral(cuentaId: string, empresaId: string, fecha
 
 // TODO: Get empresaId from authenticated user context
 export async function getAllCuentas() {
-  const empresaId = "00000000-0000-0000-0000-000000000000"
+  const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
   return getCuentas(empresaId)
 }
 
 export async function getAllAsientos() {
-  const empresaId = "00000000-0000-0000-0000-000000000000"
+  const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501"
   return getAsientos(empresaId)
 }

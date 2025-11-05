@@ -59,8 +59,8 @@ export async function getCuentasPorCobrar(empresaId: string) {
       return {
         id: factura.id,
         factura_numero: factura.numero,
-        cliente_id: factura.clientes?.id || "",
-        cliente_nombre: factura.clientes?.nombre || "",
+        cliente_id: factura.clientes?.[0]?.id || "",
+         cliente_nombre: factura.clientes?.[0]?.nombre || "",
         fecha: factura.fecha,
         vencimiento: vencimiento.toISOString().split("T")[0],
         monto: factura.total,

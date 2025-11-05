@@ -65,10 +65,10 @@ export default function MantenimientoPage() {
   const loadData = async () => {
     try {
       setLoading(true)
-      const empresaId = "00000000-0000-0000-0000-000000000000" // TODO: Get from auth
+      const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501" // TODO: Get from auth
 
       const [mantenimientosData, activosData] = await Promise.all([
-        mantenimientoService.getAll(empresaId),
+        mantenimientoService.getall(empresaId),
         activosService.getActivos(empresaId),
       ])
 
@@ -83,21 +83,22 @@ export default function MantenimientoPage() {
 
   const handleSubmit = async () => {
     try {
-      const empresaId = "00000000-0000-0000-0000-000000000000" // TODO: Get from auth
+      const empresaId = "8459a58c-01ad-44f5-b6dd-7fe7ad82b501" // TODO: Get from auth
+      const tipoNormalized = formData.tipo.toLowerCase() as "preventivo" | "correctivo" | "predictivo";
 
-      await mantenimientoService.create({
-        empresa_id: empresaId,
-        activo_id: formData.activoId,
-        tipo: formData.tipo,
-        fecha: formData.fecha,
-        fecha_proxima: formData.fechaProxima || null,
-        descripcion: formData.descripcion,
-        costo: formData.costo,
-        proveedor: formData.proveedor,
-        responsable: formData.responsable,
-        estado: "Programado",
-        observaciones: formData.observaciones,
-      })
+      await mantenimientoService.createMantenimiento(
+  empresaId,
+  {
+    activo_fijo_id: formData.activoId,
+    tipo: tipoNormalized, // match con "preventivo" | "correctivo" | "predictivo"
+    fecha: formData.fecha,
+    proximo_mantenimiento: formData.fechaProxima || null,
+    descripcion: formData.descripcion,
+    costo: formData.costo,
+    proveedor: formData.proveedor,
+    realizado_por: formData.responsable,
+  }
+)
 
       setIsDialogOpen(false)
       loadData()
